@@ -3,12 +3,25 @@ import shutil
 import tempfile
 import zipfile
 from pathlib import Path
+from flask_cors import CORS
+
+app = Flask(__name__)
+
+CORS(
+    app,
+    resources={
+        r"/extract": {
+            "origins": [
+                "https://antonryans.github.io"
+            ],
+            "methods": ["POST"]
+        }
+    }
+)
 
 import cv2
 from flask import Flask, Response, jsonify, render_template, request
 from werkzeug.utils import secure_filename
-
-app = Flask(__name__)
 
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "100"))
 MAX_FRAMES = int(os.environ.get("MAX_FRAMES", "1000"))  

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Frame Extractor</title>
-  <link rel="stylesheet" href="/docs/style.css">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <main class="card">
@@ -15,7 +15,7 @@
       <label class="dropzone" id="dropzone" for="video">
         <input type="file" id="video" name="video" accept="video/*,.mkv" required>
         <span class="dz-title" id="dz-title">Choose a video or drop it here</span>
-        <span class="dz-hint">MP4, MOV, AVI, MKV, WebM &middot; up to {{ max_mb }} MB</span>
+        <span class="dz-hint"> MP4, MOV, AVI, MKV, WebM &middot; up to 100 MB </span>
       </label>
 
       <div class="row">
@@ -41,7 +41,7 @@
         </div>
       </div>
 
-      <p class="note">Output is capped at {{ max_frames }} images per clip.</p>
+     <p class="note">  Output is capped at 1000 images per clip. </p>
 
       <button type="submit" id="submit">Extract frames</button>
 
@@ -117,7 +117,8 @@
       if (!file) { showMessage('Please choose a video file first.', true); return; }
 
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/extract');
+      const API_URL = "https://mixedmediaframegenerator.onrender.com";
+      xhr.open('POST', `${API_URL}/extract`);
       xhr.responseType = 'blob';
 
       xhr.upload.onprogress = ev => {
