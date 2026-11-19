@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frame Extractor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="card">
+    <h1>Frame Extractor</h1>
+    <p class="lead">Upload a video clip and get its frames back as images in a zip file.</p>
+
+    <form id="form" enctype="multipart/form-data" novalidate>
+      <label class="dropzone" id="dropzone" for="video">
+        <input type="file" id="video" name="video" accept="video/*,.mkv" required>
+        <span class="dz-title" id="dz-title">Choose a video or drop it here</span>
+        <span class="dz-hint">MP4, MOV, AVI, MKV, WebM &middot; up to {{ max_mb }} MB</span>
+      </label>
+
+      <div class="row">
+        <div class="field">
+          <label for="mode">Extract</label>
+          <select id="mode" name="mode">
+            <option value="every">Every Nth frame</option>
+            <option value="fps">Frames per second</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="value" id="value-label">N (1 = every frame)</label>
+          <input type="number" id="value" name="value" value="1" min="0.1" step="any">
+        </div>
+
+        <div class="field">
+          <label for="format">Image format</label>
+          <select id="format" name="format">
+            <option value="png">PNG (lossless)</option>
+            <option value="jpg">JPG (smaller)</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="note">Output is capped at {{ max_frames }} images per clip.</p>
+
+      <button type="submit" id="submit">Extract frames</button>
+
+      <div class="progress" id="progress" hidden>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <p id="status"></p>
+      </div>
+
+      <p class="message" id="message" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('form');
+    const fileInput = document.getElementById('video');
+    const dropzone = document.getElementById('dropzone');
+    const dzTitle = document.getElementById('dz-title');
+    const mode = document.getElementById('mode');
+    const valueLabel = document.getElementById('value-label');
+    const valueInput = document.getElementById('value');
+    const submit = document.getElementById('submit');
+    const progress = document.getElementById('progress');
+    const fill = document.getElementById('fill');
+    const status = document.getElementById('status');
+    const message = document.getElementById('message');
+
+    function showMessage(text, isError) {
+      message.textContent = text;
+      message.className = 'message ' + (isError ? 'error' : 'ok');
+    }
+
+    function updateFileName() {
+      const f = fileInput.files[0];
+      dzTitle.textContent = f ? f.name : 'Choose a video or drop it here';
+      dropzone.classList.toggle('has-file', Boolean(f));
+    }
+
+    mode.addEventListener('change', () => {
+      if (mode.value === 'fps') {
+        valueLabel.textContent = 'Frames per second';
+        valueInput.value = 1;
+      } else {
+        valueLabel.textContent = 'N (1 = every frame)';
+        valueInput.value = 1;
+      }
+    });
+
+    fileInput.addEventListener('change', updateFileName);
+
+    ['dragenter', 'dragover'].forEach(evt =>
+      dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(evt =>
+      dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+    dropzone.addEventListener('drop', e => {
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        updateFileName();
+      }
+    });
+
+    function setBusy(busy) {
+      submit.disabled = busy;
+      progress.hidden = !busy;
+      if (busy) { fill.style.width = '0%'; fill.classList.remove('indeterminate'); }
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      message.textContent = '';
+      message.className = 'message';
+
+      const file = fileInput.files[0];
+      if (!file) { showMessage('Please choose a video file first.', true); return; }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/extract');
+      xhr.responseType = 'blob';
+
+      xhr.upload.onprogress = ev => {
+        if (ev.lengthComputable) {
+          fill.style.width = Math.round((ev.loaded / ev.total) * 100) + '%';
+          status.textContent = 'Uploading… ' + Math.round((ev.loaded / ev.total) * 100) + '%';
+        }
+      };
+      xhr.upload.onload = () => {
+        fill.style.width = '100%';
+        fill.classList.add('indeterminate');
+        status.textContent = 'Extracting frames…';
+      };
+
+      xhr.onload = async () => {
+        setBusy(false);
+        if (xhr.status === 200) {
+          const count = xhr.getResponseHeader('X-Frame-Count');
+          const capped = xhr.getResponseHeader('X-Frame-Cap-Hit') === '1';
+          const stem = file.name.replace(/\.[^.]+$/, '') || 'video';
+          const url = URL.createObjectURL(xhr.response);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = stem + '_frames.zip';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+          let text = 'Done! ' + count + ' frames saved to your zip.';
+          if (capped) text += ' (Stopped at the per-clip limit.)';
+          showMessage(text, false);
+        } else {
+          let text = 'Something went wrong.';
+          try { text = JSON.parse(await xhr.response.text()).error || text; } catch (_) {}
+          showMessage(text, true);
+        }
+      };
+
+      xhr.onerror = () => { setBusy(false); showMessage('Network error. Is the server running?', true); };
+
+      setBusy(true);
+      status.textContent = 'Uploading…';
+      xhr.send(new FormData(form));
+    });
+  </script>
+</body>
+</html>
