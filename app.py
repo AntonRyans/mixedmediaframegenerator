@@ -3,6 +3,17 @@ import shutil
 import tempfile
 import zipfile
 from pathlib import Path
+
+import cv2
+from flask import Flask, Response, jsonify, render_template, request
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+
+import os
+import shutil
+import tempfile
+import zipfile
+from pathlib import Path
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -19,16 +30,15 @@ CORS(
     }
 )
 
-import cv2
-from flask import Flask, Response, jsonify, render_template, request
-from werkzeug.utils import secure_filename
-
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "100"))
-MAX_FRAMES = int(os.environ.get("MAX_FRAMES", "1000"))  
-ALLOWED_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v", ".wmv", ".flv"}
+MAX_FRAMES = int(os.environ.get("MAX_FRAMES", "1000"))
+
+ALLOWED_EXTENSIONS = {
+    ".mp4", ".mov", ".avi", ".mkv",
+    ".webm", ".m4v", ".wmv", ".flv"
+}
 
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
-
 
 class ExtractionError(Exception):
     """Raised for problems we want to show to the user."""
