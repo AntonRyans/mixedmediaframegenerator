@@ -119,7 +119,7 @@ def extract():
         value = float(request.form.get("value", "1"))
     except ValueError:
         return jsonify(error="Extraction value must be a number."), 400
-    if value <= 0 or value > 10000:
+    if value <= 0 or value > 1000000:
         return jsonify(error="Extraction value must be greater than 0."), 400
 
     image_format = request.form.get("format", "png")
