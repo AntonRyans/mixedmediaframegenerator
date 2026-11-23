@@ -3,3 +3,4 @@ opencv-python-headless>=4.9
 gunicorn>=22.0
 flask-cors
 numpy>=1.26
+pypdfium2>=4.30,<6

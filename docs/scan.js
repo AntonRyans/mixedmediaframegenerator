@@ -15,7 +15,7 @@
 
   function updateName() {
     const count = files.files.length;
-    fileTitle.textContent = count === 0 ? 'Choose scanned sheets or photos' :
+    fileTitle.textContent = count === 0 ? 'Choose scanned PDFs or photos' :
       count === 1 ? files.files[0].name : count + ' scanned sheets selected';
     dropzone.classList.toggle('has-file', Boolean(count));
   }
@@ -61,7 +61,22 @@
     message.textContent = '';
     goPrint.hidden = true;
     if (!files.files.length) {
-      report('Choose at least one marked sheet image.', true);
+      report('Choose at least one PDF or marked sheet image.', true);
+      return;
+    }
+    // Backend accepts PDFs of multiple pages, or separate image sheets.
+    const allowed = /\.(pdf|png|jpe?g|webp)$/i;
+    const invalid = Array.from(files.files).find(file => !allowed.test(file.name));
+    if (invalid) {
+      report('Unsupported file: ' + invalid.name + '. Select PDF, PNG, JPG or WebP.', true);
+      return;
+    }
+    const pdfLimit = (Number($('scan-pdf-max-mb')?.textContent) || 1024) * 1024 * 1024;
+    const imageLimit = (Number($('scan-image-max-mb')?.textContent) || 25) * 1024 * 1024;
+    const oversized = Array.from(files.files).find(file =>
+      file.size > (/\.pdf$/i.test(file.name) ? pdfLimit : imageLimit));
+    if (oversized) {
+      report('File is too large: ' + oversized.name, true);
       return;
     }
     const xhr = new XMLHttpRequest();
@@ -77,15 +92,17 @@
     xhr.upload.onload = () => {
       fill.style.width = '100%';
       fill.classList.add('indeterminate');
-      status.textContent = 'Straightening sheets and cutting out frames…';
+      status.textContent = 'Rendering PDF pages (if any), straightening sheets and cropping frames…';
     };
     xhr.onload = async () => {
       busy(false);
       if (xhr.status === 200) {
         const count = xhr.getResponseHeader('X-Frame-Count');
         const capped = xhr.getResponseHeader('X-Frame-Cap-Hit') === '1';
+        const fallback = Number(xhr.getResponseHeader('X-Scan-Fallback-Pages') || 0);
         downloadZip(xhr.response);
         report('Recovered ' + count + ' frames! The ZIP download has started.' +
+          (fallback ? ' ' + fallback + ' page(s) needed fallback alignment; check the crops and scan_report.txt inside the ZIP.' : '') +
           (capped ? ' Output stopped at the frame limit.' : ''));
         window.dispatchEvent(new CustomEvent('frames-ready', { detail: { blob: xhr.response } }));
         goPrint.hidden = false;

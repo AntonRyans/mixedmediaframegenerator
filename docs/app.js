@@ -1,4 +1,5 @@
 const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL || '').replace(/\/+$/, '');
+let maxUploadMb = 1024; // Fallback while Render is waking up
 
 const form = document.getElementById('form');
 const fileInput = document.getElementById('video');
@@ -55,7 +56,8 @@ async function connectToServer() {
     const res = await fetch(API_URL + '/limits');
     if (!res.ok) throw new Error('bad status');
     const data = await res.json();
-    document.getElementById('max-mb').textContent = data.max_mb;
+    maxUploadMb = Number(data.max_mb) || 1024;
+    document.getElementById('max-mb').textContent = maxUploadMb;
     document.getElementById('max-frames').textContent = data.max_frames;
     serverStatus.textContent = '';
   } catch (_) {
@@ -104,6 +106,10 @@ form.addEventListener('submit', e => {
 
   const file = fileInput.files[0];
   if (!file) { showMessage('Please choose a video file first.', true); return; }
+  if (file.size > maxUploadMb * 1024 * 1024) {
+    showMessage('Video exceeds the ' + maxUploadMb + ' MB upload limit.', true);
+    return;
+  }
 
   const xhr = new XMLHttpRequest();
   xhr.open('POST', API_URL + '/extract');

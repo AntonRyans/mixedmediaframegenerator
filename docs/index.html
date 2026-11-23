@@ -27,7 +27,7 @@
         <label class="dropzone" id="dropzone" for="video">
           <input type="file" id="video" name="video" accept="video/*,.mkv" required>
           <span class="dz-title" id="dz-title">Choose a video or drop it here</span>
-          <span class="dz-hint">MP4, MOV, AVI, MKV, WebM &middot; up to <span id="max-mb">100</span> MB</span>
+          <span class="dz-hint">MP4, MOV, AVI, MKV, WebM &middot; up to <span id="max-mb">1024</span> MB</span>
         </label>
 
         <div class="row">
@@ -123,13 +123,13 @@
 
     <!-- ============ Scan tab ============ -->
     <section id="panel-scan" role="tabpanel" aria-labelledby="tab-scan" hidden>
-      <p class="panel-lead">Upload photos or scans of your <strong>printed and drawn-on sheets</strong>.
-        The four black corner squares let the website straighten each page and cut out its 3 × 3 frames.</p>
+      <p class="panel-lead">Upload <strong>PDFs, photos, or scans</strong> of your printed and drawn-on sheets.
+        The website tries four corner squares, then the paper edges, then partial marker detection, and finally a whole-page crop if needed.</p>
       <form id="scan-form" enctype="multipart/form-data">
         <label class="dropzone" for="scan-images" id="scan-dropzone">
-          <input type="file" id="scan-images" name="images" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple required>
-          <span class="dz-title" id="scan-file-title">Choose scanned sheets or photos</span>
-          <span class="dz-hint">JPG, PNG or WebP · multiple pages · upload in page order (filenames are sorted)</span>
+          <input type="file" id="scan-images" name="images" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple required>
+          <span class="dz-title" id="scan-file-title">Choose scanned PDFs or photos</span>
+          <span class="dz-hint">Multi-page PDF, JPG, PNG or WebP · files sorted by name · PDF pages stay in order</span>
         </label>
 
         <div class="row">
@@ -160,13 +160,23 @@
           </div>
         </div>
         <div class="field scan-format">
+          <label for="scan-alignment">Alignment method</label>
+          <select id="scan-alignment" name="alignment">
+            <option value="auto">Auto (recommended, flexible)</option>
+            <option value="page">Paper edges / whole page (ignore markers)</option>
+            <option value="full">Full image only (already cropped)</option>
+            <option value="markers">Four markers only (strict)</option>
+          </select>
+        </div>
+        <div class="field scan-format">
           <label for="scan-format">Output image format</label>
           <select id="scan-format" name="format">
             <option value="png">PNG (lossless)</option>
             <option value="jpg">JPG (smaller ZIP)</option>
           </select>
         </div>
-        <p class="note">Use the new marked printouts. Keep all four corner squares visible, photograph each entire page upright, and avoid heavy shadows. Choose the same paper size used when printing. PDFs and older unmarked printouts are not supported.</p>
+        <p class="note">PDFs can contain multiple marked sheets (one sheet per page). Each JPG/PNG/WebP counts as one sheet. Keep the entire sheet visible when possible. Missing or covered squares no longer automatically fail: the scanner falls back to page edges or full-image alignment. <strong>Check the crops</strong> after fallback alignment. Unmarked pages can work if they use the same 3 × 3 layout.</p>
+        <p class="note">Limits: up to <span id="scan-pages-max">110</span> pages total; PDFs up to <span id="scan-pdf-max-mb">1024</span> MB each; images up to <span id="scan-image-max-mb">25</span> MB each. Total upload size is also limited by the server.</p>
 
         <button type="submit" id="scan-submit">Recover frames from sheets</button>
         <div class="progress" id="scan-progress" hidden>
