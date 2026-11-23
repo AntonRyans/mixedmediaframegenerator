@@ -1,48 +1,46 @@
-# Frame Extractor
+# Frame Extractor — Scan Tab Edition
 
-A small web app: upload a video clip, get its frames back as images in a zip.
+Video → Extract frames → Print 3x3 sheets → Draw on paper → Scan/photo → ZIP of recovered frames.
 
-- **Backend:** Python, Flask, OpenCV
-- **Frontend:** plain HTML, CSS and a little JavaScript (upload progress, download)
+## Replace / add these files
 
-## Run locally
+**Backend (Render)**
+- Replace your existing `app(1).py` with `app.py` (rename to `app.py` in the repo).
+- **Add** `scan_utils.py` next to `app.py`.
+- Update `requirements.txt` (OpenCV and NumPy are required).
 
-```bash
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+**Frontend (GitHub Pages)**
+- Replace `index.html`, `print.js`, and `style.css`.
+- **Add** `scan.js` next to `app.js`, `print.js`, `style.css`, and `index.html`.
+- Keep `app.js` and `zip.js`; they work unchanged.
+- In `config.js`, set `API_URL` to the deployed Render backend URL (no trailing slash). For local testing, use `http://127.0.0.1:5000`.
+
+## Local setup
+
+```sh
+python -m pip install -r requirements.txt
 python app.py
 ```
 
-Open http://127.0.0.1:5000
+Open http://127.0.0.1:5000 in your browser. This backend now also serves the frontend for local tests; GitHub Pages is still supported for the frontend.
 
-## Deploy to Render (free)
+## Using Scan
 
-GitHub Pages can't run Python, so the whole app (backend and pages) is served from Render.
+1. Extract frames from a video, then open **Print**.
+2. Load those frames, select **A4** or **US Letter**, and choose an orientation.
+3. Print new sheets at **100% scale**, **no margins**, with **background graphics enabled**. Each printed page has 4 black registration squares.
+4. Draw on the sheets, keeping their registration squares visible.
+5. Photograph/scan every page, upright, with all four squares visible and without cropping the sheet edges. Use JPG/PNG/WebP (not PDF). Name the scans in page order, e.g. `sheet_01.jpg`, `sheet_02.jpg`.
+6. In **Scan**, select the matching paper size, select all scanned sheets, and specify the number of actual frames on the **last** page (default 9). Use **Auto** orientation for normally upright scanned sheets.
+7. Click **Recover frames from sheets**. The website downloads a `scanned_frames.zip` containing `frame_00001.png`, etc. A shortcut can send those images back to **Print**.
 
-1. Push this folder to a GitHub repo.
-2. In Render, choose **New > Blueprint**, connect the repo, and apply. Render reads `render.yaml`.
-   (Or **New > Web Service** and set: build `pip install -r requirements.txt`,
-   start `gunicorn app:app --workers 1 --threads 2 --timeout 300 --bind 0.0.0.0:$PORT`.)
-3. When the deploy finishes you get a `https://frame-extractor-xxxx.onrender.com` URL.
+## How registration works
 
-Free-tier things to know:
+- `print.js` adds four corner marks to every sheet.
+- `style.css` places the corner marks and each frame in fixed millimetre positions.
+- `scan_utils.py` uses OpenCV to identify the squares, correct perspective and crop the nine frame regions, omitting frame outlines and caption areas.
+- `app.py` accepts `POST /scan` with `multipart/form-data` fields `images` (multiple), `paper`, `orientation`, `last_page_frames`, and `format`.
 
-- The service **sleeps after ~15 minutes idle**; the next visit takes up to a minute to wake it.
-- It has 512 MB RAM and a small share of CPU, so long or high-resolution clips are slow.
-  Defaults are 100 MB upload / 1000 frames. Change them in the Render dashboard under
-  Environment (`MAX_UPLOAD_MB`, `MAX_FRAMES`) without touching code.
-- Disk is temporary, which is fine: uploads and zips are deleted as soon as the download ends.
+The layout constants in `scan_utils.py` must stay synchronized with `style.css`. In particular, changes to paper padding, grid gap, marker positions, label height, or frame padding require updates to the scanner coordinates.
 
-## Options
-
-- **Every Nth frame** (1 = every single frame) or **frames per second** of video
-- **PNG** (lossless) or **JPG** (smaller)
-
-## Settings
-
-| Setting | Default | Where |
-|---|---|---|
-| `MAX_UPLOAD_MB` | 100 | environment variable |
-| `MAX_FRAMES` | 1000 images per clip | environment variable |
-| `ALLOWED_EXTENSIONS` | mp4, mov, avi, mkv, webm, m4v, wmv, flv | top of `app.py` |
+**Limitations:** This is for *new printed sheets with four markers*. Older printouts without markers, heavily cropped images, unreadable photos, and PDF uploads are unsupported. The system does not preserve metadata for the source video or frame filenames; output frames are sequentially renumbered in order of the uploaded scanned-page filenames. Frames may include white letterboxing if the source video aspect ratio differs from the printed frame box. Pages that have been photographed sideways should be rotated upright before uploading.

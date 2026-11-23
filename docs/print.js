@@ -143,17 +143,28 @@
     for (let i = 0; i < chosen.length; i += PER_PAGE) {
       const page = document.createElement('div');
       page.className = 'page';
+      // Four solid, 5 mm registration marks, centred 10 mm in from paper edges.
+      // The Scan backend uses their centres to correct perspective.
+      for (const corner of ['tl', 'tr', 'br', 'bl']) {
+        const mark = document.createElement('span');
+        mark.className = 'scan-mark scan-mark-' + corner;
+        mark.setAttribute('aria-hidden', 'true');
+        page.appendChild(mark);
+      }
       chosen.slice(i, i + PER_PAGE).forEach(frame => {
         const fig = document.createElement('figure');
         const img = document.createElement('img');
         img.src = frame.url;
         img.alt = frame.name;
-        fig.appendChild(img);
-        if (namesBox.checked) {
-          const cap = document.createElement('figcaption');
-          cap.textContent = stem(frame.name);
-          fig.appendChild(cap);
-        }
+        const picture = document.createElement('div');
+        picture.className = 'frame-picture';
+        picture.appendChild(img);
+        fig.appendChild(picture);
+        // Keep exactly 5 mm below the image even if captions are disabled;
+        // this makes the scanner's crop coordinates consistent.
+        const cap = document.createElement('figcaption');
+        cap.textContent = namesBox.checked ? stem(frame.name) : '';
+        fig.appendChild(cap);
         page.appendChild(fig);
       });
       fragment.appendChild(page);

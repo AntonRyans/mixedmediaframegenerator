@@ -204,7 +204,8 @@ button:disabled { opacity: 0.6; cursor: progress; }
   box-sizing: border-box;
   width: calc(var(--pw) * 1mm);
   height: calc(var(--ph) * 1mm);
-  padding: 10mm;
+  position: relative;
+  padding: 16mm 13mm;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
@@ -219,21 +220,54 @@ button:disabled { opacity: 0.6; cursor: progress; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.5mm;
+  padding: 1mm;
+  border: 0.25mm solid #444;
+  overflow: hidden;
 }
-.sheet figure img {
-  flex: 1;
+
+.sheet .frame-picture {
+  width: 100%;
   min-height: 0;
-  max-width: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sheet figure img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
+
 .sheet figcaption {
-  flex: none;
+  flex: 0 0 5mm;
+  height: 5mm;
+  overflow: hidden;
   font-size: 8pt;
-  line-height: 1.2;
+  text-align: center;
+  line-height: 5mm;
   color: #444;
 }
+
+/* Black registration markers 5 mm wide, 7.5 mm from each paper edge.
+   Their centres are 10 mm from the edges: see scan_utils.py. */
+.sheet .scan-mark {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  width: 5mm;
+  height: 5mm;
+  background: #000;
+  box-shadow: 0 0 0 1mm #fff;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.sheet .scan-mark-tl { top: 7.5mm; left: 7.5mm; }
+.sheet .scan-mark-tr { top: 7.5mm; right: 7.5mm; }
+.sheet .scan-mark-br { bottom: 7.5mm; right: 7.5mm; }
+.sheet .scan-mark-bl { bottom: 7.5mm; left: 7.5mm; }
+
+.scan-format { margin-top: 16px; max-width: 200px; }
 
 @media print {
   html, body { background: #fff; }

@@ -10,13 +10,15 @@
 <body>
   <main class="card">
     <h1>Frame Extractor</h1>
-    <p class="lead">Turn a video clip into frames, then print them nine to a page.</p>
+    <p class="lead">Extract video frames, print them for drawing, then scan them back into individual frames.</p>
 
     <div class="tabs" role="tablist" aria-label="Sections">
       <button type="button" role="tab" id="tab-extract" data-tab="extract"
               aria-controls="panel-extract" aria-selected="true">Extract</button>
       <button type="button" role="tab" id="tab-print" data-tab="print"
               aria-controls="panel-print" aria-selected="false" tabindex="-1">Print</button>
+      <button type="button" role="tab" id="tab-scan" data-tab="scan"
+              aria-controls="panel-scan" aria-selected="false" tabindex="-1">Scan</button>
     </div>
 
     <!-- ============ Extract tab ============ -->
@@ -69,7 +71,7 @@
     <!-- ============ Print tab ============ -->
     <section id="panel-print" role="tabpanel" aria-labelledby="tab-print" hidden>
       <p class="panel-lead">Lays your frames out nine to a page (3 &times; 3), ready to print.
-        Everything happens in your browser; nothing is uploaded.</p>
+        Everything happens in your browser; nothing is uploaded. The sheets now include corner registration marks and frame outlines for the Scan tab.</p>
 
       <div class="print-source">
         <button type="button" class="secondary" id="use-last" disabled>Use my last extraction</button>
@@ -118,11 +120,69 @@
 
       <div id="sheet" class="sheet" aria-label="Print preview"></div>
     </section>
+
+    <!-- ============ Scan tab ============ -->
+    <section id="panel-scan" role="tabpanel" aria-labelledby="tab-scan" hidden>
+      <p class="panel-lead">Upload photos or scans of your <strong>printed and drawn-on sheets</strong>.
+        The four black corner squares let the website straighten each page and cut out its 3 × 3 frames.</p>
+      <form id="scan-form" enctype="multipart/form-data">
+        <label class="dropzone" for="scan-images" id="scan-dropzone">
+          <input type="file" id="scan-images" name="images" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple required>
+          <span class="dz-title" id="scan-file-title">Choose scanned sheets or photos</span>
+          <span class="dz-hint">JPG, PNG or WebP · multiple pages · upload in page order (filenames are sorted)</span>
+        </label>
+
+        <div class="row">
+          <div class="field">
+            <label for="scan-paper">Printed paper</label>
+            <select id="scan-paper" name="paper">
+              <option value="a4">A4</option>
+              <option value="letter">US Letter</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="scan-orientation">Page orientation</label>
+            <select id="scan-orientation" name="orientation">
+              <option value="auto">Auto detect</option>
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="scan-last-count">Frames on last sheet</label>
+            <select id="scan-last-count" name="last_page_frames">
+              <option value="9">9 (full)</option>
+              <option value="8">8</option><option value="7">7</option>
+              <option value="6">6</option><option value="5">5</option>
+              <option value="4">4</option><option value="3">3</option>
+              <option value="2">2</option><option value="1">1</option>
+            </select>
+          </div>
+        </div>
+        <div class="field scan-format">
+          <label for="scan-format">Output image format</label>
+          <select id="scan-format" name="format">
+            <option value="png">PNG (lossless)</option>
+            <option value="jpg">JPG (smaller ZIP)</option>
+          </select>
+        </div>
+        <p class="note">Use the new marked printouts. Keep all four corner squares visible, photograph each entire page upright, and avoid heavy shadows. Choose the same paper size used when printing. PDFs and older unmarked printouts are not supported.</p>
+
+        <button type="submit" id="scan-submit">Recover frames from sheets</button>
+        <div class="progress" id="scan-progress" hidden>
+          <div class="bar"><div class="fill" id="scan-fill"></div></div>
+          <p id="scan-status"></p>
+        </div>
+        <p class="message" id="scan-message" role="status" aria-live="polite"></p>
+        <button type="button" class="secondary" id="scan-go-print" hidden>Print recovered frames →</button>
+      </form>
+    </section>
   </main>
 
   <script src="config.js"></script>
   <script src="zip.js"></script>
   <script src="app.js"></script>
   <script src="print.js"></script>
+  <script src="scan.js"></script>
 </body>
 </html>
