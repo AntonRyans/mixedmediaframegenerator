@@ -1,4 +1,5 @@
 Flask>=3.0
 opencv-python-headless>=4.9
 gunicorn>=22.0
-flask-corsnumpy>=1.26
+flask-cors
+numpy>=1.26
